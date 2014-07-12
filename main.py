@@ -1,28 +1,30 @@
 #! /usr/bin/ern python3
 import json
 import subprocess
-import HTML
+from jinja2 import Environment, FileSystemLoader
+
+env = Environment(loader=FileSystemLoader('.'))
+template = env.get_template('layout.html')
 
 def getKey(item):
     return item[3]
 
-output = subprocess.check_output(["alfred-json","-r","158","-f","json","-z"])
-alfred = json.loads(output.decode("utf-8"))
+if __name__ == "__main__":
+    output = subprocess.check_output(["alfred-json","-r","158","-f","json","-z"])
+    alfred = json.loads(output.decode("utf-8"))
 
-macs = []
-t = []
+    macs = []
+    data = []
 
-for node in alfred:
-    macs.append(node)
+    for node in alfred:
+        macs.append(node)
 
-for mac in macs:
-    name = alfred[mac]['hostname']
-    tx = alfred[mac]['statistics']['traffic']['tx']['bytes'] / 1000000
-    rx = alfred[mac]['statistics']['traffic']['rx']['bytes'] / 1000000
-    sum = rx + tx
-    t.append([name,rx,tx,sum])
+    for mac in macs:
+        nodeData = {}
+        nodeData['name'] = alfred[mac]['hostname']
+        nodeData['rx'] = alfred[mac]['statistics']['traffic']['tx']['bytes'] / 1000000
+        nodeData['tx'] = alfred[mac]['statistics']['traffic']['rx']['bytes'] / 1000000
+        nodeData['total'] = nodeData['rx'] + nodeData['tx']
+        data.append(nodeData)
 
-sorted_table = sorted(t, key=getKey,  reverse=True)
-htmlcode = HTML.table(sorted_table, header_row=['Name', 'MByte RX', 'MByte TX', 'MByte total'])
-
-print htmlcode
+    print (template.render(data=data))
