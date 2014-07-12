@@ -7,7 +7,7 @@ env = Environment(loader=FileSystemLoader('.'))
 template = env.get_template('layout.html')
 
 def getKey(item):
-    return item[3]
+    return item['total']
 
 if __name__ == "__main__":
     output = subprocess.check_output(["alfred-json","-r","158","-f","json","-z"])
