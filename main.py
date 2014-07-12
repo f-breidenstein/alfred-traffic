@@ -27,4 +27,7 @@ if __name__ == "__main__":
         nodeData['total'] = nodeData['rx'] + nodeData['tx']
         data.append(nodeData)
 
-    print (template.render(data=data))
+
+    
+    sorted = sorted(data, key=getKey, reverse=True)
+    print (template.render(data=sorted))
