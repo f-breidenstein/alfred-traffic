@@ -1,20 +1,28 @@
 #! /usr/bin/ern python3
 import json
-json_data=open('alfred.json')
+import subprocess
+import HTML
 
-alfred = json.load(json_data)
+def getKey(item):
+    return item[3]
 
-print("%30s %12s %12s" % ("Name", "MByte RX", "MByte TX") )
+output = subprocess.check_output(["alfred-json","-r","158","-f","json","-z"])
+alfred = json.loads(output.decode("utf-8"))
 
-nodes = []
+macs = []
+t = []
 
 for node in alfred:
-    nodes.append(node)
+    macs.append(node)
 
-for mac in nodes:
+for mac in macs:
     name = alfred[mac]['hostname']
     tx = alfred[mac]['statistics']['traffic']['tx']['bytes'] / 1000000
     rx = alfred[mac]['statistics']['traffic']['rx']['bytes'] / 1000000
-    print("%30s %12d %12d" % (name, rx, tx) )
+    sum = rx + tx
+    t.append([name,rx,tx,sum])
 
-json_data.close()
+sorted_table = sorted(t, key=getKey,  reverse=True)
+htmlcode = HTML.table(sorted_table, header_row=['Name', 'MByte RX', 'MByte TX', 'MByte total'])
+
+print htmlcode
