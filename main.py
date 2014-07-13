@@ -2,8 +2,10 @@
 import json
 import subprocess
 from jinja2 import Environment, FileSystemLoader
+import os
 
-env = Environment(loader=FileSystemLoader('.'))
+path = os.path.dirname(os.path.realpath(__file__))
+env = Environment(loader=FileSystemLoader(path))
 template = env.get_template('layout.html')
 
 def getKey(item):
