@@ -16,20 +16,26 @@ if __name__ == "__main__":
     alfred = json.loads(output.decode("utf-8"))
 
     macs = []
-    data = []
+    network = []
 
+    # iterate over the data from alfred to get every mac address
     for node in alfred:
         macs.append(node)
 
+    # get some of the data fileds from the data provided by alfred
     for mac in macs:
-        nodeData = {}
-        nodeData['name'] = alfred[mac]['hostname']
-        nodeData['rx'] = alfred[mac]['statistics']['traffic']['tx']['bytes'] / 1000000
-        nodeData['tx'] = alfred[mac]['statistics']['traffic']['rx']['bytes'] / 1000000
-        nodeData['total'] = nodeData['rx'] + nodeData['tx']
-        data.append(nodeData)
+        node = {}
+        node_json = alfred[mac]
+        node['name'] = node_json['hostname']
+        node['ip'] = node_json['network']['addresses'][0]
+        node['branch'] = node_json['software']['autoupdater']['branch']
+        node['version'] =  node_json['software']['firmware']['release']
+        node['uptime'] = node_json['statistics']['uptime']
+        node['load'] = node_json['statistics']['loadavg']
+        node['rx'] = node_json['statistics']['traffic']['tx']['bytes'] / 1000000
+        node['tx'] = node_json['statistics']['traffic']['rx']['bytes'] / 1000000
+        node['total'] = node['rx'] + node['tx']
+        network.append(node)
 
-
-    
-    sorted = sorted(data, key=getKey, reverse=True)
+    sorted = sorted(network, key=getKey, reverse=True)
     print (template.render(data=sorted))
