@@ -32,8 +32,8 @@ if __name__ == "__main__":
         node['version'] =  node_json['software']['firmware']['release']
         node['uptime'] = node_json['statistics']['uptime']
         node['load'] = node_json['statistics']['loadavg']
-        node['rx'] = node_json['statistics']['traffic']['tx']['bytes'] / 1000000
-        node['tx'] = node_json['statistics']['traffic']['rx']['bytes'] / 1000000
+        node['tx'] = node_json['statistics']['traffic']['tx']['bytes'] / 1000000
+        node['rx'] = node_json['statistics']['traffic']['rx']['bytes'] / 1000000
         node['total'] = node['rx'] + node['tx']
         network.append(node)
 
