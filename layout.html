@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=windows-1252">
@@ -7,17 +8,25 @@
 		background: #FFFFFF;
 	}
 
-	.content {
+	table.content {
 		background: #EEEEEE;
 		width: 70%;
 		margin-left: auto;
 		margin-right: auto;
+        border: 1px solid black;
+        border-collapse:collapse;
 	}
+
+    table.content td {
+        border: 1px solid black;
+        border-collapse:collapse;
+        padding: 5px;
+    }
 
 	</style>
 </head>
 <body>
-		<table border=1 class=content>
+		<table class="content">
 			<tr>
 				<td>Name</td>
 				<td>MByte Received</td>
