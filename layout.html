@@ -1,48 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="content-type" content="text/html; charset=windows-1252">
-	<link href="style.css" rel="stylesheet" type="text/css" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 	<style type="text/css">
-	body{
-		background: #FFFFFF;
-	}
-
-	table.content {
-		background: #EEEEEE;
-		width: 70%;
-		margin-left: auto;
-		margin-right: auto;
-        border: 1px solid black;
-        border-collapse:collapse;
-	}
-
-    table.content td {
-        border: 1px solid black;
-        border-collapse:collapse;
-        padding: 5px;
-    }
-
+        body{
+            background: #FFFFFF;
+        }
 	</style>
 </head>
 <body>
-		<table class="content">
+    <div class="table-responsive">
+		<table class="table">
+        <thead>
 			<tr>
-				<td>Name</td>
-				<td>MByte Received</td>
-				<td>MByte Sent</td>
-				<td>MByte Total</td>
+				<th>Name</th>
+				<th>Uptime (h)</th>
+				<th>Load</th>
+				<th>Traffic Received (MByte)</th>
+				<th>Traffic Sent (MByte)</th>
+				<th>Traffic Total (MByte)</th>
 			</tr>
-
+        </thead>
+        <tbody>
 			{% for node in data %}
 			<tr>
 				<td>{{ node['name'] }}</td>
+				<td>{{ node['uptime'] }}</td>
+				<td>{{ node['load'] }}</td>
 				<td>{{ node['rx'] }}</td>
 				<td>{{ node['tx'] }}</td>
 				<td>{{ node['total'] }}</td>
 			</tr>
 			{% endfor %}
-
+        </tbody>
 		</table>
+    </div>
 </body>
 </html>
