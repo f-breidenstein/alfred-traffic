@@ -7,25 +7,32 @@
         body{
             background: #FFFFFF;
         }
+        td, th {
+            text-align:center; 
+        }
+        #name {
+            text-align:left;  
+        }
+        
 	</style>
 </head>
 <body>
     <div class="table-responsive">
-		<table class="table">
+		<table class="table table-striped">
         <thead>
 			<tr>
-				<th>Name</th>
+				<th id="name">Name</th>
 				<th>Uptime (h)</th>
 				<th>Load</th>
-				<th>Traffic Received (MByte)</th>
-				<th>Traffic Sent (MByte)</th>
-				<th>Traffic Total (MByte)</th>
+				<th>Received (MByte)</th>
+				<th>Sent (MByte)</th>
+				<th>Total (MByte)</th>
 			</tr>
         </thead>
         <tbody>
 			{% for node in data %}
 			<tr>
-				<td>{{ node['name'] }}</td>
+				<td id="name">{{ node['name'] }}</td>
 				<td>{{ node['uptime'] }}</td>
 				<td>{{ node['load'] }}</td>
 				<td>{{ node['rx'] }}</td>
