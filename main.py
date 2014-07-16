@@ -31,9 +31,17 @@ if __name__ == "__main__":
         node['branch'] = node_json['software']['autoupdater']['branch']
         node['version'] =  node_json['software']['firmware']['release']
         node['uptime'] = round(node_json['statistics']['uptime'] / 3600,2)
+
+        #show uptime in days if it's bigger than 24h
+        if(24 <  node['uptime']):
+            node['uptime'] = "%s d" % (str(round(node['uptime'] / 24,2)))
         node['load'] = node_json['statistics']['loadavg']
-        node['tx'] = node_json['statistics']['traffic']['tx']['bytes'] / 1000000
-        node['rx'] = node_json['statistics']['traffic']['rx']['bytes'] / 1000000
+        
+        # Swap rx/tx beauce  it's meassured on the bat interface and not
+        # on the Wifi interface. 
+        # Rx on Bat0 == Tx on WiFi
+        node['rx'] = node_json['statistics']['traffic']['tx']['bytes'] / 1000000
+        node['tx'] = node_json['statistics']['traffic']['rx']['bytes'] / 1000000
         node['total'] = node['rx'] + node['tx']
         network.append(node)
 
