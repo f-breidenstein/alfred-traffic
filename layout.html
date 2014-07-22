@@ -24,8 +24,6 @@
 				<th id="name">Name</th>
 				<th>Uptime (h)</th>
 				<th>Load</th>
-				<th>Received (MByte)</th>
-				<th>Sent (MByte)</th>
 				<th>Total (MByte)</th>
 			</tr>
         </thead>
@@ -35,8 +33,6 @@
 				<td id="name">{{ node['name'] }}</td>
 				<td>{{ node['uptime'] }}</td>
 				<td>{{ node['load'] }}</td>
-				<td>{{ node['rx'] }}</td>
-				<td>{{ node['tx'] }}</td>
 				<td>{{ node['total'] }}</td>
 			</tr>
 			{% endfor %}
