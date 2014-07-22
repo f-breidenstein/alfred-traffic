@@ -10,10 +10,10 @@
         td, th {
             text-align:center; 
         }
-        #name {
+        .leftAlign {
             text-align:left;  
         }
-        
+
 	</style>
 </head>
 <body>
@@ -21,8 +21,11 @@
 		<table class="table table-striped">
         <thead>
 			<tr>
-				<th id="name">Name</th>
+				<th class="leftAlign">Name</th>
 				<th>Uptime (h)</th>
+				<th>Firmware</th>
+				<th>Branch</th>
+				<th class="leftAlign">Model</th>
 				<th>Load</th>
 				<th>Total (MByte)</th>
 			</tr>
@@ -32,6 +35,9 @@
 			<tr>
 				<td id="name">{{ node['name'] }}</td>
 				<td>{{ node['uptime'] }}</td>
+				<td>{{ node['version'] }}</td>
+				<td>{{ node['branch'] }}</td>
+				<td class="leftAlign">{{ node['model'] }}</td>
 				<td>{{ node['load'] }}</td>
 				<td>{{ node['total'] }}</td>
 			</tr>

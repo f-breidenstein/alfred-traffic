@@ -90,8 +90,11 @@ if __name__ == "__main__":
         node['ip'] = node_json['network']['addresses'][0]
         node['branch'] = node_json['software']['autoupdater']['branch']
         node['version'] =  node_json['software']['firmware']['release']
+        node['model'] = node_json['hardware']['model']
         node['uptime'] = round(node_json['statistics']['uptime'] / 3600,2)
 
+        # Strip Model names
+        node['model'] = node['model'].replace("TP-Link","").replace("Ubiquiti","").strip()
         #show uptime in days if it's bigger than 24h
         if(24 <  node['uptime']):
             node['uptime'] = "%s d" % (str(round(node['uptime'] / 24,2)))
