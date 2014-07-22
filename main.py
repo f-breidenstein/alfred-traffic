@@ -4,14 +4,16 @@ import subprocess
 from jinja2 import Environment, FileSystemLoader
 import os
 
-path = os.path.dirname(os.path.realpath(__file__))
-env = Environment(loader=FileSystemLoader(path))
-template = env.get_template('layout.html')
 
-def getKey(item):
+def get_key(item):
     return item['total']
 
+
 if __name__ == "__main__":
+    path = os.path.dirname(os.path.realpath(__file__))
+    env = Environment(loader=FileSystemLoader(path))
+    template = env.get_template('layout.html')
+
     output = subprocess.check_output(["alfred-json","-r","158","-f","json","-z"])
     alfred = json.loads(output.decode("utf-8"))
 
@@ -45,5 +47,5 @@ if __name__ == "__main__":
         node['total'] = node['rx'] + node['tx']
         network.append(node)
 
-    sorted = sorted(network, key=getKey, reverse=True)
+    sorted = sorted(network, key=get_key, reverse=True)
     print (template.render(data=sorted))
