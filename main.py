@@ -47,15 +47,14 @@ def create_table(conn):
 def get_traffic(conn, node_name):
     c = conn.cursor()
     c.execute(GET_TRAFFIC_SQL, (node_name,))
-    if c.rownum == 0:
+    result = c.fetchone()
+
+    if result:
+        traffic_sum, traffic_last = result
+    else:
         traffic_sum = 0
         traffic_last = 0
-        insert_cursor = conn.cursor()
-        insert_cursor.execute(INSERT_TRAFFIC_SQL,
-                              (node_name, traffic_sum, traffic_last))
-        insert_cursor.commit()
-    else:
-        traffic_sum, traffic_last = c.fetchone()
+
     return traffic_sum, traffic_last
 
 
@@ -97,7 +96,7 @@ if __name__ == "__main__":
         if(24 <  node['uptime']):
             node['uptime'] = "%s d" % (str(round(node['uptime'] / 24,2)))
         node['load'] = node_json['statistics']['loadavg']
-        
+
         # Swap rx/tx beauce  it's meassured on the bat interface and not
         # on the Wifi interface. 
         # Rx on Bat0 == Tx on WiFi
