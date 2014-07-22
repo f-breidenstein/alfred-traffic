@@ -26,6 +26,14 @@ UPDATE_TRAFFIC_SQL = """
         traffic_sum = ?,
         traffic_last = ?;"""
 
+INSERT_TRAFFIC_SQL = """
+    INSERT INTO
+        traffic
+    (node_name,
+     traffic_sum,
+     traffic_last)
+    VALUES (?, ?, ?);"""
+
 
 def get_key(item):
     return item['total']
@@ -39,7 +47,15 @@ def create_table(conn):
 def get_traffic(conn, node_name):
     c = conn.cursor()
     c.execute(GET_TRAFFIC_SQL, (node_name,))
-    traffic_sum, traffic_last = c.fetchone()
+    if c.rownum == 0:
+        traffic_sum = 0
+        traffic_last = 0
+        insert_cursor = conn.cursor()
+        insert_cursor.execute(INSERT_TRAFFIC_SQL,
+                              (node_name, traffic_sum, traffic_last))
+        insert_cursor.commit()
+    else:
+        traffic_sum, traffic_last = c.fetchone()
     return traffic_sum, traffic_last
 
 
@@ -89,12 +105,13 @@ if __name__ == "__main__":
         traffic_tx = node_json['statistics']['traffic']['rx']['bytes'] / 1000000
         node['total'] = traffic_rx + traffic_tx
 
-        traffic_sum, traffic_last = get_traffic(conn)
+        traffic_sum, traffic_last = get_traffic(conn, node_name=node['name'])
         if node['total'] >= traffic_last:
             traffic_sum += node['total'] - traffic_last
         else:
             traffic_sum += node['total']
         update_traffic(conn,
+                       node_name=node['name'],
                        traffic_sum=traffic_sum,
                        traffic_last=node['total'])
 
