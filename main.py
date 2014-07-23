@@ -4,6 +4,7 @@ import subprocess
 from jinja2 import Environment, FileSystemLoader
 import os
 import sqlite3
+import re
 
 CREATE_TABLE_SQL = """
     CREATE TABLE IF NOT EXISTS
@@ -63,6 +64,15 @@ def update_traffic(conn, node_name, traffic_sum, traffic_last):
     c.execute(UPDATE_TRAFFIC_SQL, (traffic_sum, traffic_last))
     conn.commit()
 
+def format_fw_version(firmware_version):
+    pattern = re.compile("(\d+\.\d+\+\d+)-exp(\d{4})(\d{2})(\d{2})")
+    matcher = pattern.match(firmware_version)
+    version = matcher.group(1)
+    year = matcher.group(2)
+    month = matcher.group(3)
+    day = matcher.group(4)
+
+    return "%s vom %s.%s" % (version, day, month)
 
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
@@ -89,7 +99,8 @@ if __name__ == "__main__":
         node['name'] = node_json['hostname']
         node['ip'] = node_json['network']['addresses'][0]
         node['branch'] = node_json['software']['autoupdater']['branch']
-        node['version'] =  node_json['software']['firmware']['release']
+        firmware_version =  node_json['software']['firmware']['release']
+        node['version'] = format_fw_version(firmware_version)
         node['model'] = node_json['hardware']['model']
         node['uptime'] = round(node_json['statistics']['uptime'] / 3600,2)
 
