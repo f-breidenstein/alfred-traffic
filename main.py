@@ -106,6 +106,7 @@ if __name__ == "__main__":
 
         # Strip Model names
         node['model'] = node['model'].replace("TP-Link","").replace("Ubiquiti","").strip()
+
         #show uptime in days if it's bigger than 24h
         if(24 <  node['uptime']):
             node['uptime'] = "%s d" % (str(round(node['uptime'] / 24,2)))
@@ -127,6 +128,10 @@ if __name__ == "__main__":
                        node_name=node['name'],
                        traffic_sum=traffic_sum,
                        traffic_last=node['total'])
+
+        # show high traffic values in GB
+        if (node['total'] > 10000):
+            node['total'] = "%d GB" % (node['total'] / 1000)
 
         network.append(node)
 
