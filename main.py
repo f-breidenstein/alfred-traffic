@@ -3,150 +3,107 @@ import json
 import requests
 from jinja2 import Environment, FileSystemLoader
 import os
-import sqlite3
 from requests.auth import HTTPBasicAuth
 
-CREATE_TABLE_SQL = """
-    CREATE TABLE IF NOT EXISTS
-        traffic
-        (node_name text,
-         traffic_sum int,
-         traffic_last int);"""
-
-GET_TRAFFIC_SQL = """
-    SELECT
-        traffic_sum,
-        traffic_last
-    FROM traffic
-    WHERE node_name = ?;"""
-
-UPDATE_TRAFFIC_SQL = """
-    UPDATE
-        traffic
-    SET
-        traffic_sum = ?,
-        traffic_last = ?;"""
-
-INSERT_TRAFFIC_SQL = """
-    INSERT INTO
-        traffic
-    (node_name,
-     traffic_sum,
-     traffic_last)
-    VALUES (?, ?, ?);"""
-
-
-def get_key(item):
-    val = item['total']
-    if type(val) is str:
-        return float(val.replace("GB","")) * 1000
+def get_key(node):
+    value = node["traffic_total"]
+    if value.find("GB") != -1:
+        return int(node["traffic_total"].replace("GB","")) * 1000
     else:
-        return val
+        return int(node["traffic_total"].replace("MB",""))
 
-def format_traffic(val):
-    if type(val) is str:
-        return val.replace("GB","")
+def stripModel(model):
+    return model.replace("TP-Link","").replace("Buffalo","").replace("Ubiquiti","").replace("NETGEAR","").strip()
+
+def convertUptime(seconds):
+    time = round(seconds / 3600,2)
+    if(24 <  time):
+        return "{} d".format(str(round(time/ 24,2)))
     else:
-        return int(val/1000.0)
+        return "{} h".format(time)
 
+def convertTraffic(node):
+    for x in ['traffic_total', 'traffic_tx', 'traffic_rx']:
+        if (node[x] > 10000):
+            node[x] = "{} GB".format(round(node[x] / 1000),2)
+        else:
+            node[x] = "{} MB".format(int(node[x]))
 
-def create_table(conn):
-    c = conn.cursor()
-    c.execute(CREATE_TABLE_SQL)
+def getGateway(gw_mac):
+    maclist={"2e:08:b9:56:9b:2f": "04",
+             "12:d9:94:14:33:5c": "03"}
+    return maclist[gw_mac]
 
-
-def get_traffic(conn, node_name):
-    c = conn.cursor()
-    c.execute(GET_TRAFFIC_SQL, (node_name,))
-    result = c.fetchone()
-
-    if result:
-        traffic_sum, traffic_last = result
+def getLoadColor(load):
+    if load < 0.5:
+        return "green"
+    elif 0.5 <= load < 0.8:
+        return "yellow"
     else:
-        traffic_sum = 0
-        traffic_last = 0
-
-    return traffic_sum, traffic_last
-
-
-def update_traffic(conn, node_name, traffic_sum, traffic_last):
-    c = conn.cursor()
-    c.execute(UPDATE_TRAFFIC_SQL, (traffic_sum, traffic_last))
-    conn.commit()
+        return "red"
 
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     env = Environment(loader=FileSystemLoader(path))
     template = env.get_template('layout.html')
 
-    conn = sqlite3.connect('data.sqlite')
-    create_table(conn)
-
     r =  requests.get("http://gw04.darmstadt.freifunk.net/alfred/158.json", auth=HTTPBasicAuth('fleaz', 'aaV7Czzk'))
-    alfred = json.loads(r.text)
+    alfred_158 = json.loads(r.text)
 
     r =  requests.get("http://gw04.darmstadt.freifunk.net/alfred/159.json", auth=HTTPBasicAuth('fleaz', 'aaV7Czzk'))
-    alfred2 = json.loads(r.text)
+    alfred_159 = json.loads(r.text)
 
     macs = []
     network = []
 
-    # iterate over the data from alfred to get every mac address
-    for node in alfred:
+    # iterate over the data to get the mac of every router
+    for node in alfred_158:
         macs.append(node)
 
-    # get some of the data fileds from the data provided by alfred
+    # get  the data for every mac
     for mac in macs:
         node = {}
-        node_json = alfred[mac]
-        node['name'] = node_json['hostname']
-        node['ip'] = node_json['network']['addresses'][0]
-        node['branch'] = node_json['software']['autoupdater']['branch']
-        node['autpupdater'] = node_json['software']['autoupdater']['enabled']
-        node['version_full'] =  node_json['software']['firmware']['release']
-        node['version'] = node['version_full']
 
-        node['model'] = node_json['hardware']['model']
+        ## get data from 158
+        json_158 = alfred_158[mac]
+        node['name'] = json_158['hostname']
+        
+        node['model'] = json_158['hardware']['model']
+        node['autoupdater'] = json_158['software']['autoupdater']['enabled']
+        node['branch'] = json_158['software']['autoupdater']['branch']
+        node['firmware'] = json_158['software']['firmware']['release']
 
-        node_json = alfred2[mac]
-        node['uptime'] = round(node_json['uptime'] / 3600,2)
+        try:
+            node['long'] = json_158['location']['longitude']
+            node['lat'] = json_158['location']['latitude']
+        except:
+            node['long'] = None
+            node['lat'] = None
 
-        # Strip Model names
-        node['model'] = node['model'].replace("TP-Link","").replace("Buffalo","").replace("Ubiquiti","").replace("NETGEAR","").strip()
+        ## get data from 159
+        json_159 = alfred_159[mac]
+        node['uptime'] =  json_159['uptime']
+        node['gateway'] = json_159['gateway']
+        node['traffic_tx'] = json_159['traffic']['tx']['bytes'] / 1000000
+        node['traffic_rx'] = json_159['traffic']['rx']['bytes'] / 1000000
+        node['traffic_total'] = node['traffic_tx'] + node['traffic_rx']
+        node['load'] = json_159['loadavg']
 
-        #show uptime in days if it's bigger than 24h
-        if(24 <  node['uptime']):
-            node['uptime'] = "%s d" % (str(round(node['uptime'] / 24,2)))
-        node['load'] = node_json['loadavg']
+        ## enhance the date
+        # Remove manufacturer name
+        node['model'] = stripModel(node['model'])
+        # convert sec to hours
+        node['uptime'] =  convertUptime(node['uptime'])
+        # change GW MAC with name
+        node['gateway'] = getGateway(node['gateway'])
+        # convert traffic to gb if needed
+        convertTraffic(node)
+        # get color for current load
+        node['loadcolor'] = getLoadColor(node['load'])
 
-        # Swap rx/tx beauce  it's meassured on the bat interface and not
-        # on the Wifi interface. 
-        # Rx on Bat0 == Tx on WiFi
-        traffic_rx = node_json['traffic']['tx']['bytes'] / 1000000
-        traffic_tx = node_json['traffic']['rx']['bytes'] / 1000000
-
-        node['total'] = traffic_rx + traffic_tx
-
-        traffic_sum, traffic_last = get_traffic(conn, node_name=node['name'])
-
-        if node['total'] == 0 or node['total'] >= traffic_last:
-            traffic_sum += node['total'] - traffic_last
-        else:
-            traffic_sum += node['total']
-        update_traffic(conn,
-                       node_name=node['name'],
-                       traffic_sum=traffic_sum,
-                       traffic_last=node['total'])
-
-        # show high traffic values in GB
-        if (node['total'] > 10000):
-            node['total'] = "%d GB" % (node['total'] / 1000)
         network.append(node)
 
     sorted = sorted(network, key=get_key, reverse=True)
-
-    for x in network:
-        x['total'] = format_traffic(x['total'])
 
     print (template.render(data=sorted))
 

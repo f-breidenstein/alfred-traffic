@@ -2,7 +2,8 @@
 <html>
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+
 	<style type="text/css">
         body{
             background: #FFFFFF;
@@ -28,6 +29,7 @@
 				<th>Branch</th>
 				<th class="leftAlign">Model</th>
 				<th>Load</th>
+				<th>GW</th>
 				<th>Traffic (GB)</th>
 			</tr>
         </thead>
@@ -36,12 +38,17 @@
 			<tr>
                 <td class="leftAlign"><a href="http://{{ node['name'] }}.node.ffda/cgi-bin/status">{{ node['name'] }}</a></td>
 				<td>{{ node['uptime'] }}</td>
-				<td class="leftAlign" title="{{ node['version_full'] }}">{{ node['version'] }}</td>
-				<td>{{ node['autpupdater'] }}</td>
+				<td class="leftAlign" >{{ node['firmware'] }}</td>
+				{% if node['autoupdater'] %}
+					<td><span class="glyphicon glyphicon-ok"></span></td>
+				{% else %}
+					<td><span class="glyphicon glyphicon-remove"></span></td>
+				{% endif %}
 				<td>{{ node['branch'] }}</td>
 				<td class="leftAlign">{{ node['model'] }}</td>
-				<td>{{ node['load'] }}</td>
-				<td>{{ node['total'] }}</td>
+				<td style="color: {{node['loadcolor']}}">{{ node['load'] }}</td>
+				<td>{{ node['gateway'] }}</td>
+				<td><span title="TX:{{node['traffic_tx']}}, RX:{{node['traffic_rx']}}">{{ node['traffic_total'] }}</span></td>
 			</tr>
 			{% endfor %}
         </tbody>
