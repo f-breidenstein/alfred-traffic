@@ -1,10 +1,10 @@
 #! /usr/bin/ern python3
 import json
-import subprocess
+import requests
 from jinja2 import Environment, FileSystemLoader
 import os
 import sqlite3
-import re
+from requests.auth import HTTPBasicAuth
 
 CREATE_TABLE_SQL = """
     CREATE TABLE IF NOT EXISTS
@@ -37,7 +37,17 @@ INSERT_TRAFFIC_SQL = """
 
 
 def get_key(item):
-    return item['total']
+    val = item['total']
+    if type(val) is str:
+        return float(val.replace("GB","")) * 1000
+    else:
+        return val
+
+def format_traffic(val):
+    if type(val) is str:
+        return val.replace("GB","")
+    else:
+        return int(val/1000.0)
 
 
 def create_table(conn):
@@ -64,16 +74,6 @@ def update_traffic(conn, node_name, traffic_sum, traffic_last):
     c.execute(UPDATE_TRAFFIC_SQL, (traffic_sum, traffic_last))
     conn.commit()
 
-def format_fw_version(firmware_version):
-    pattern = re.compile("(\d+\.\d+\+\d+)-exp(\d{4})(\d{2})(\d{2})")
-    matcher = pattern.match(firmware_version)
-    version = matcher.group(1)
-    year = matcher.group(2)
-    month = matcher.group(3)
-    day = matcher.group(4)
-
-    return "%s vom %s.%s" % (version, day, month)
-
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     env = Environment(loader=FileSystemLoader(path))
@@ -82,8 +82,11 @@ if __name__ == "__main__":
     conn = sqlite3.connect('data.sqlite')
     create_table(conn)
 
-    output = subprocess.check_output(["alfred-json","-r","158","-f","json","-z"])
-    alfred = json.loads(output.decode("utf-8"))
+    r =  requests.get("http://gw04.darmstadt.freifunk.net/alfred/158.json", auth=HTTPBasicAuth('fleaz', 'aaV7Czzk'))
+    alfred = json.loads(r.text)
+
+    r =  requests.get("http://gw04.darmstadt.freifunk.net/alfred/159.json", auth=HTTPBasicAuth('fleaz', 'aaV7Czzk'))
+    alfred2 = json.loads(r.text)
 
     macs = []
     network = []
@@ -99,28 +102,34 @@ if __name__ == "__main__":
         node['name'] = node_json['hostname']
         node['ip'] = node_json['network']['addresses'][0]
         node['branch'] = node_json['software']['autoupdater']['branch']
-        firmware_version =  node_json['software']['firmware']['release']
-        node['version'] = format_fw_version(firmware_version)
+        node['autpupdater'] = node_json['software']['autoupdater']['enabled']
+        node['version_full'] =  node_json['software']['firmware']['release']
+        node['version'] = node['version_full']
+
         node['model'] = node_json['hardware']['model']
-        node['uptime'] = round(node_json['statistics']['uptime'] / 3600,2)
+
+        node_json = alfred2[mac]
+        node['uptime'] = round(node_json['uptime'] / 3600,2)
 
         # Strip Model names
-        node['model'] = node['model'].replace("TP-Link","").replace("Ubiquiti","").strip()
+        node['model'] = node['model'].replace("TP-Link","").replace("Buffalo","").replace("Ubiquiti","").replace("NETGEAR","").strip()
 
         #show uptime in days if it's bigger than 24h
         if(24 <  node['uptime']):
             node['uptime'] = "%s d" % (str(round(node['uptime'] / 24,2)))
-        node['load'] = node_json['statistics']['loadavg']
+        node['load'] = node_json['loadavg']
 
         # Swap rx/tx beauce  it's meassured on the bat interface and not
         # on the Wifi interface. 
         # Rx on Bat0 == Tx on WiFi
-        traffic_rx = node_json['statistics']['traffic']['tx']['bytes'] / 1000000
-        traffic_tx = node_json['statistics']['traffic']['rx']['bytes'] / 1000000
+        traffic_rx = node_json['traffic']['tx']['bytes'] / 1000000
+        traffic_tx = node_json['traffic']['rx']['bytes'] / 1000000
+
         node['total'] = traffic_rx + traffic_tx
 
         traffic_sum, traffic_last = get_traffic(conn, node_name=node['name'])
-        if node['total'] >= traffic_last:
+
+        if node['total'] == 0 or node['total'] >= traffic_last:
             traffic_sum += node['total'] - traffic_last
         else:
             traffic_sum += node['total']
@@ -132,9 +141,12 @@ if __name__ == "__main__":
         # show high traffic values in GB
         if (node['total'] > 10000):
             node['total'] = "%d GB" % (node['total'] / 1000)
-
         network.append(node)
 
     sorted = sorted(network, key=get_key, reverse=True)
+
+    for x in network:
+        x['total'] = format_traffic(x['total'])
+
     print (template.render(data=sorted))
 

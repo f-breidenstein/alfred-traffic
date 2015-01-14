@@ -23,19 +23,21 @@
 			<tr>
 				<th class="leftAlign">Name</th>
 				<th>Uptime (h)</th>
-				<th>Firmware</th>
+				<th class="leftAlign">Firmware</th>
+				<th>Autoupdater</th>
 				<th>Branch</th>
 				<th class="leftAlign">Model</th>
 				<th>Load</th>
-				<th>Traffic (MByte)</th>
+				<th>Traffic (GB)</th>
 			</tr>
         </thead>
         <tbody>
 			{% for node in data %}
 			<tr>
-				<td class="leftAlign">{{ node['name'] }}</td>
+                <td class="leftAlign"><a href="http://{{ node['name'] }}.node.ffda/cgi-bin/status">{{ node['name'] }}</a></td>
 				<td>{{ node['uptime'] }}</td>
-				<td>{{ node['version'] }}</td>
+				<td class="leftAlign" title="{{ node['version_full'] }}">{{ node['version'] }}</td>
+				<td>{{ node['autpupdater'] }}</td>
 				<td>{{ node['branch'] }}</td>
 				<td class="leftAlign">{{ node['model'] }}</td>
 				<td>{{ node['load'] }}</td>
