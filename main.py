@@ -1,4 +1,4 @@
-#! /usr/bin/ern python3
+#! /usr/bin/env python3
 import json
 import requests
 from jinja2 import Environment, FileSystemLoader
@@ -8,9 +8,10 @@ from requests.auth import HTTPBasicAuth
 def get_key(node):
     value = node["traffic_total"]
     if value.find("GB") != -1:
-        return int(node["traffic_total"].replace("GB","")) * 1000
+        value = float(node["traffic_total"].replace("GB","").strip()) * 1000
     else:
-        return int(node["traffic_total"].replace("MB",""))
+        value = float(node["traffic_total"].replace("MB","").strip())
+    return int(value)
 
 def stripModel(model):
     return model.replace("TP-Link","").replace("Buffalo","").replace("Ubiquiti","").replace("NETGEAR","").strip()
@@ -28,11 +29,6 @@ def convertTraffic(node):
             node[x] = "{} GB".format(round(node[x] / 1000),2)
         else:
             node[x] = "{} MB".format(int(node[x]))
-
-def getGateway(gw_mac):
-    maclist={"2e:08:b9:56:9b:2f": "04",
-             "12:d9:94:14:33:5c": "03"}
-    return maclist[gw_mac]
 
 def getLoadColor(load):
     if load < 0.5:
@@ -67,12 +63,23 @@ if __name__ == "__main__":
         ## get data from 158
         json_158 = alfred_158[mac]
         node['name'] = json_158['hostname']
-        
-        node['model'] = json_158['hardware']['model']
-        node['autoupdater'] = json_158['software']['autoupdater']['enabled']
-        node['branch'] = json_158['software']['autoupdater']['branch']
-        node['firmware'] = json_158['software']['firmware']['release']
+        try:
+            node['model'] = json_158['hardware']['model']
+            node['type'] = "router"
+        except:
+            node['model'] = "Server"
+            node['type'] = "server"
 
+        if node['type'] == "server":
+            node['autoupdater'] = "-"
+            node['branch'] = None
+            node['firmware'] = json_158['software']['firmware']['base']
+        else:
+            node['autoupdater'] = json_158['software']['autoupdater']['enabled']
+            node['branch'] = json_158['software']['autoupdater']['branch']
+            node['firmware'] = json_158['software']['firmware']['release']
+
+        # try to get GPS data
         try:
             node['long'] = json_158['location']['longitude']
             node['lat'] = json_158['location']['latitude']
@@ -83,7 +90,6 @@ if __name__ == "__main__":
         ## get data from 159
         json_159 = alfred_159[mac]
         node['uptime'] =  json_159['uptime']
-        node['gateway'] = json_159['gateway']
         node['traffic_tx'] = json_159['traffic']['tx']['bytes'] / 1000000
         node['traffic_rx'] = json_159['traffic']['rx']['bytes'] / 1000000
         node['traffic_total'] = node['traffic_tx'] + node['traffic_rx']
@@ -94,8 +100,6 @@ if __name__ == "__main__":
         node['model'] = stripModel(node['model'])
         # convert sec to hours
         node['uptime'] =  convertUptime(node['uptime'])
-        # change GW MAC with name
-        node['gateway'] = getGateway(node['gateway'])
         # convert traffic to gb if needed
         convertTraffic(node)
         # get color for current load
