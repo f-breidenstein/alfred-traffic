@@ -24,6 +24,7 @@
 		<thead>
 			<tr>
 				<th class="leftAlign">Name</th>
+				<th>Positon</th>
 				<th>Uptime (h)</th>
 				<th class="leftAlign">Firmware</th>
 				<th>Autoupdater</th>
@@ -36,9 +37,13 @@
 			{% for node in data %}
 			<tr>
 				<td class="leftAlign"><a href="http://{{ node['name'] }}.node.ffda/cgi-bin/status">{{ node['name'] }}</a></td>
+				<td>{% if node['long'] %} <a href="http://www.openstreetmap.org/?mlat={{node['lat']}}&mlon={{node['long']}}&zoom=15"><span class="glyphicon glyphicon-globe"></span></a>
+					{% else %}<span style="color: red;" class="glyphicon glyphicon-globe"></span>
+					{% endif %}</td>
 				<td>{{ node['uptime'] }}</td>
 				<td class="leftAlign">{{node['firmware']}}
-					{% if node['branch'] %} <small>({{ node['branch'] }}){% endif %}</small></td>
+					{% if node['branch'] %} <small>({{ node['branch'] }})
+					{% endif %}</small></td>
 				{% if node['autoupdater'] %}
 					<td><span style="color:green;" class="glyphicon glyphicon-ok"></span></td>
 				{% else %}
