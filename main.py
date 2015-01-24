@@ -34,7 +34,7 @@ def getLoadColor(load):
     if load < 0.5:
         return "green"
     elif 0.5 <= load < 0.8:
-        return "yellow"
+        return "#CCCC00"
     else:
         return "red"
 
