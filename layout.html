@@ -36,7 +36,7 @@
 		<tbody>
 			{% for node in data %}
 			<tr>
-				<td class="leftAlign"><a href="http://{{ node['name'] }}.node.ffda/cgi-bin/status">{{ node['name'] }}</a></td>
+				<td class="leftAlign"> {% if node['model'] != "Server" %}<a href="http://{{ node['name'] }}.node.ffda/cgi-bin/status">{{ node['name'] }}</a>{% else %} {{ node['name'] }}{% endif %}</td>
 				<td>{% if node['long'] %} <a href="http://www.openstreetmap.org/?mlat={{node['lat']}}&mlon={{node['long']}}&zoom=15"><span class="glyphicon glyphicon-globe"></span></a>
 					{% else %}<span style="color: red;" class="glyphicon glyphicon-globe"></span>
 					{% endif %}</td>
