@@ -38,6 +38,19 @@ def getLoadColor(load):
     else:
         return "red"
 
+def try_get(data, default, args):
+    try:
+        if len(args) == 1:
+            return data[args[0]]
+        elif len(args) == 2:
+            return data[args[0]][args[1]]
+        elif len(args) == 3:
+            return data[args[0]][args[1]][args[2]]
+        else:
+            return default
+    except:
+        return default
+
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     env = Environment(loader=FileSystemLoader(path))
@@ -73,11 +86,11 @@ if __name__ == "__main__":
         if node['type'] == "server":
             node['autoupdater'] = "-"
             node['branch'] = None
-            node['firmware'] = json_158['software']['firmware']['base']
+            node['firmware'] = try_get(json_158, "-", ['software', 'firmware', 'base'])
         else:
-            node['autoupdater'] = json_158['software']['autoupdater']['enabled']
-            node['branch'] = json_158['software']['autoupdater']['branch']
-            node['firmware'] = json_158['software']['firmware']['release']
+            node['autoupdater'] = try_get(json_158, "-", ['software', 'autoupdater', 'enabled'])
+            node['branch'] = try_get(json_158, "-", ['software', 'autoupdater', 'branch'])
+            node['firmware'] = try_get(json_158, "-", ['software', 'firmware', 'base'])
 
         # try to get GPS data
         try:
@@ -89,11 +102,11 @@ if __name__ == "__main__":
 
         ## get data from 159
         json_159 = alfred_159[mac]
-        node['uptime'] =  json_159['uptime']
-        node['traffic_tx'] = json_159['traffic']['tx']['bytes'] / 1000000
-        node['traffic_rx'] = json_159['traffic']['rx']['bytes'] / 1000000
+        node['uptime'] =  try_get(json_159, 0, ['uptime'])
+        node['traffic_tx'] = try_get(json_159, 0, ['traffic', 'tx', 'bytes']) / 1000000
+        node['traffic_rx'] = try_get(json_159, 0, ['traffic', 'rx', 'bytes']) / 1000000
         node['traffic_total'] = node['traffic_tx'] + node['traffic_rx']
-        node['load'] = json_159['loadavg']
+        node['load'] = try_get(json_159 , 0, ['loadavg'])
 
         ## enhance the date
         # Remove manufacturer name
