@@ -90,7 +90,7 @@ if __name__ == "__main__":
         else:
             node['autoupdater'] = try_get(json_158, "-", ['software', 'autoupdater', 'enabled'])
             node['branch'] = try_get(json_158, "-", ['software', 'autoupdater', 'branch'])
-            node['firmware'] = try_get(json_158, "-", ['software', 'firmware', 'base'])
+            node['firmware'] = try_get(json_158, "-", ['software', 'firmware', 'release'])
 
         # try to get GPS data
         try:
